@@ -31,38 +31,184 @@ def home():
 
 
 # Main scanning endpoint
+# Main scanning endpoint
 @app.post("/scan")
 def scan_link(request: ScanRequest):
-    url = request.url.strip()
+    url = request.url.strip().lower()
 
-    # Convert URL into numeric features
+    # =========================================
+    # Adult / NSFW Detection
+    # =========================================
+    adult_keywords = [
+        "porn",
+        "xxx",
+        "sex",
+        "adult",
+        "nsfw",
+        "xvideos",
+        "xnxx",
+        "redtube",
+        "youporn",
+        "hentai",
+        "brazzers",
+        "pornhub",
+        "sexvideo",
+        "hardcore",
+        "camgirl",
+        "webcam",
+        "escort",
+        "nude",
+        "naked",
+        "milf",
+        "onlyfans",
+        "blowjob",
+        "anal",
+        "fetish",
+        "bdsm",
+        "erotic",
+        "18plus",
+        "18+",
+        "strip",
+        "camsex",
+        "livejasmin",
+        "spankbang",
+        "rule34",
+        "fap",
+        "fucking",
+        "boobs",
+        "pussy",
+        "dick",
+        "cum",
+        "deepthroat",
+        "gangbang",
+        "threesome",
+        "incest",
+        "harem",
+        "waifu",
+        "ecchi",
+        "jav",
+        "nsfwchat",
+        "sexchat",
+        "land",
+        "chut",
+        "spank",
+        "desikaka",
+        "lund",
+        "chudai",
+        "eporner",
+        "dinotube",
+        "hamster",
+        "xhamster",
+        "pucchi",
+        "bulla",
+        "nigga"
+    ]
+
+    if any(keyword in url for keyword in adult_keywords):
+        return {
+            "url": url,
+            "status": "dangerous",
+            "risk_score": 98,
+            "signals": [
+                "Adult or NSFW content detected",
+                "Website may contain explicit material",
+                "Access blocked by SnowShield"
+            ]
+        }
+
+    # =========================================
+    # Gambling Detection
+    # =========================================
+    gambling_keywords = [
+        "casino",
+        "bet",
+        "betting",
+        "gambling",
+        "poker",
+        "roulette",
+        "slot",
+        "jackpot",
+        "blackjack",
+        "lottery",
+        "stake",
+        "1xbet",
+        "dafabet",
+        "parimatch"
+    ]
+
+    if any(keyword in url for keyword in gambling_keywords):
+        return {
+            "url": url,
+            "status": "suspicious",
+            "risk_score": 85,
+            "signals": [
+                "Gambling-related website detected",
+                "May contain betting or casino content",
+                "Proceed carefully"
+            ]
+        }
+
+    # =========================================
+    # Malware / Pirated APK Detection
+    # =========================================
+    malware_keywords = [
+        "crack",
+        "modapk",
+        "hack",
+        "keygen",
+        "torrent",
+        "warez",
+        "pirated",
+        "cheat",
+        "freeapk",
+        "apkmod",
+        "malware",
+        "virusdownload"
+        "happymod"
+        "an1"
+    ]
+
+    if any(keyword in url for keyword in malware_keywords):
+        return {
+            "url": url,
+            "status": "dangerous",
+            "risk_score": 92,
+            "signals": [
+                "Potential malware or pirated content detected",
+                "Website may distribute unsafe files",
+                "Downloading from this source is risky"
+            ]
+        }
+
+    # =========================================
+    # AI Phishing Detection
+    # =========================================
     features = [extract_features(url)]
 
-    # Predict: 0 = safe, 1 = phishing
     prediction = int(model.predict(features)[0])
 
-    # Get probability scores
     probabilities = model.predict_proba(features)[0]
     classes = list(model.classes_)
 
-    # Find phishing probability (class 1)
     if 1 in classes:
         phishing_index = classes.index(1)
         phishing_probability = float(probabilities[phishing_index])
     else:
         phishing_probability = 0.0
 
-    # Convert probability to risk score out of 100
     risk_score = round(phishing_probability * 100)
 
-    # Decide final status and explanation
+    # =========================================
+    # Final Result
+    # =========================================
     if prediction == 0:
         status = "safe"
         signals = [
             "No strong phishing indicators detected",
             "Domain structure appears normal",
-            "URL passed machine learning analysis"
+            "URL passed AI security analysis"
         ]
+
     elif risk_score < 80:
         status = "suspicious"
         signals = [
@@ -70,6 +216,7 @@ def scan_link(request: ScanRequest):
             "Proceed with caution",
             "Avoid entering sensitive information"
         ]
+
     else:
         status = "dangerous"
         signals = [
@@ -78,7 +225,6 @@ def scan_link(request: ScanRequest):
             "Opening this link may be unsafe"
         ]
 
-    # Return JSON response
     return {
         "url": url,
         "status": status,

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SnowShield Alerts</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+
+  <style>
+
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+    }
+
+    body{
+      background:#050d1a;
+      color:#e8f4ff;
+      font-family:'Syne',sans-serif;
+      min-height:100vh;
+      padding:20px;
+    }
+
+    .container{
+      max-width:430px;
+      margin:auto;
+    }
+
+    .header{
+      margin-top:30px;
+      margin-bottom:30px;
+      text-align:center;
+    }
+
+    .title{
+      font-size:32px;
+      font-weight:800;
+      background:linear-gradient(135deg,#fff,#4fc8f0);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+    }
+
+    .subtitle{
+      font-size:12px;
+      color:#5a7a99;
+      margin-top:8px;
+      font-family:'DM Mono',monospace;
+      letter-spacing:2px;
+      text-transform:uppercase;
+    }
+
+    .alert-list{
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+
+    .alert-card{
+      background:#0b1829;
+      border-radius:18px;
+      padding:18px;
+      border:1px solid rgba(100,200,255,0.12);
+      position:relative;
+      overflow:hidden;
+    }
+
+    .alert-card.safe{
+      border-left:5px solid #3dd68c;
+    }
+
+    .alert-card.suspicious{
+      border-left:5px solid #f5a623;
+    }
+
+    .alert-card.dangerous{
+      border-left:5px solid #f0506e;
+    }
+
+    .alert-top{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:10px;
+    }
+
+    .alert-status{
+      font-size:13px;
+      font-weight:700;
+      text-transform:uppercase;
+      letter-spacing:1px;
+    }
+
+    .safe .alert-status{
+      color:#3dd68c;
+    }
+
+    .suspicious .alert-status{
+      color:#f5a623;
+    }
+
+    .dangerous .alert-status{
+      color:#f0506e;
+    }
+
+    .alert-score{
+      font-size:11px;
+      color:#5a7a99;
+      font-family:'DM Mono',monospace;
+    }
+
+    .alert-url{
+      font-size:13px;
+      word-break:break-all;
+      line-height:1.5;
+      margin-bottom:10px;
+    }
+
+    .alert-message{
+      font-size:12px;
+      color:#9cb7d1;
+      line-height:1.6;
+    }
+
+    .alert-time{
+      margin-top:12px;
+      font-size:10px;
+      color:#5a7a99;
+      font-family:'DM Mono',monospace;
+    }
+
+    .empty{
+      text-align:center;
+      padding:60px 20px;
+      opacity:0.6;
+    }
+
+    .empty-icon{
+      font-size:52px;
+      margin-bottom:14px;
+    }
+
+    .clear-btn{
+      width:100%;
+      margin-top:20px;
+      padding:16px;
+      border:none;
+      border-radius:16px;
+      background:linear-gradient(135deg,#f0506e,#b92040);
+      color:white;
+      font-size:14px;
+      font-weight:700;
+      cursor:pointer;
+    }
+
+    .back-btn{
+      width:100%;
+      margin-top:12px;
+      padding:16px;
+      border:none;
+      border-radius:16px;
+      background:linear-gradient(135deg,#1a6fa0,#0d4a70);
+      color:white;
+      font-size:14px;
+      font-weight:700;
+      cursor:pointer;
+    }
+
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <div class="title">Security Alerts</div>
+    <div class="subtitle">Threat Monitoring Center</div>
+  </div>
+
+  <div class="alert-list" id="alertList"></div>
+
+  <button class="clear-btn" onclick="clearAlerts()">
+    Clear All Alerts
+  </button>
+
+  <button class="back-btn" onclick="window.location.href='scan.html'">
+    ← Back to Scanner
+  </button>
+
+</div>
+
+<script>
+
+const history =
+  JSON.parse(
+    localStorage.getItem('snowshield_history')
+  ) || [];
+
+// Only show suspicious and dangerous
+const alerts =
+  history.filter(item =>
+    item.status === 'dangerous' ||
+    item.status === 'suspicious'
+  );
+
+const alertList =
+  document.getElementById('alertList');
+
+if(alerts.length === 0){
+
+  alertList.innerHTML = `
+
+    <div class="empty">
+
+      <div class="empty-icon">
+        ❄️
+      </div>
+
+      <div>
+        No active security alerts
+      </div>
+
+    </div>
+
+  `;
+
+}else{
+
+  alertList.innerHTML =
+    alerts.map(item => `
+
+      <div class="alert-card ${item.status}">
+
+        <div class="alert-top">
+
+          <div class="alert-status">
+            ${item.status}
+          </div>
+
+          <div class="alert-score">
+            Risk ${item.score}/100
+          </div>
+
+        </div>
+
+        <div class="alert-url">
+          ${item.url}
+        </div>
+
+        <div class="alert-message">
+
+          ${
+            item.status === 'dangerous'
+            ? 'High-risk threat detected. Avoid visiting this website or entering personal information.'
+            : 'Potentially unsafe link detected. Proceed carefully.'
+          }
+
+        </div>
+
+        <div class="alert-time">
+          ${item.time || 'Recently'}
+        </div>
+
+      </div>
+
+    `).join('');
+
+}
+
+function clearAlerts(){
+
+  if(confirm('Clear all alerts?')){
+
+    localStorage.removeItem(
+      'snowshield_history'
+    );
+
+    location.reload();
+  }
+}
+
+</script>
+
+</body>
+</html>

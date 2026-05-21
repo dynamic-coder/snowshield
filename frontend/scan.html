@@ -692,6 +692,7 @@ const results = {
     score: 10,
     signals: []
   },
+
   suspicious: {
     title: 'Suspicious Link',
     subtitle: 'Proceed with caution',
@@ -699,6 +700,7 @@ const results = {
     score: 50,
     signals: []
   },
+
   dangerous: {
     title: 'Dangerous!',
     subtitle: 'Do NOT visit this link',
@@ -709,80 +711,217 @@ const results = {
 };
 
 async function runScan() {
-  const url = document.getElementById('urlInput').value.trim();
+
+  const url =
+    document.getElementById('urlInput').value.trim();
 
   if (!url) {
     alert('Please enter a URL');
     return;
   }
 
-  const btn = document.getElementById('scanBtn');
-  const card = document.getElementById('resultCard');
+  const btn =
+    document.getElementById('scanBtn');
+
+  const card =
+    document.getElementById('resultCard');
 
   btn.parentElement.classList.add('scanning');
+
   btn.disabled = true;
+
   card.style.display = 'none';
 
   try {
-    const response = await fetch('http://127.0.0.1:8000/scan', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        url: url
-      })
-    });
+
+    const response = await fetch(
+      'http://127.0.0.1:8000/scan',
+      {
+        method: 'POST',
+
+        headers: {
+          'Content-Type': 'application/json'
+        },
+
+        body: JSON.stringify({
+          url: url
+        })
+      }
+    );
 
     if (!response.ok) {
-      throw new Error('Server returned ' + response.status);
+      throw new Error(
+        'Server returned ' + response.status
+      );
     }
 
     const data = await response.json();
 
-    results[data.status].score = data.risk_score;
-    results[data.status].signals = data.signals;
+    results[data.status].score =
+      data.risk_score;
+
+    results[data.status].signals =
+      data.signals;
 
     showResult(data.status, url);
 
   } catch (error) {
+
     console.error(error);
-    alert('Could not connect to SnowShield backend.');
+
+    alert(
+      'Could not connect to SnowShield backend.'
+    );
+
   } finally {
-    btn.parentElement.classList.remove('scanning');
+
+    btn.parentElement.classList.remove(
+      'scanning'
+    );
+
     btn.disabled = false;
   }
 }
 
 function showResult(type, url) {
+
   const data = results[type];
-  const card = document.getElementById('resultCard');
 
-  card.className = 'result-card ' + type;
+  const card =
+    document.getElementById('resultCard');
 
-  document.getElementById('resultIcon').textContent = data.icon;
-  document.getElementById('resultTitle').textContent = data.title;
-  document.getElementById('resultSubtitle').textContent = data.subtitle;
-  document.getElementById('riskScoreVal').textContent = data.score + '/100';
+  card.className =
+    'result-card ' + type;
 
-  document.getElementById('meterFill').style.width = data.score + '%';
+  document.getElementById(
+    'resultIcon'
+  ).textContent = data.icon;
 
-  document.getElementById('signalsList').innerHTML =
-    data.signals.map(signal =>
-      `<div class="signal-item">
+  document.getElementById(
+    'resultTitle'
+  ).textContent = data.title;
+
+  document.getElementById(
+    'resultSubtitle'
+  ).textContent = data.subtitle;
+
+  document.getElementById(
+    'riskScoreVal'
+  ).textContent = data.score + '/100';
+
+  document.getElementById(
+    'meterFill'
+  ).style.width = data.score + '%';
+
+  document.getElementById(
+    'signalsList'
+  ).innerHTML =
+    data.signals.map(signal => `
+      <div class="signal-item">
         <div class="signal-dot"></div>
         <span>${signal}</span>
-      </div>`
-    ).join('');
+      </div>
+    `).join('');
 
+  // =========================
+  // SAVE SCAN HISTORY
+  // =========================
+
+  const historyItem = {
+    url: url,
+    status: type,
+    score: data.score,
+    time: new Date().toLocaleTimeString()
+  };
+
+  let history =
+    JSON.parse(
+      localStorage.getItem(
+        'snowshield_history'
+      )
+    ) || [];
+
+  history.unshift(historyItem);
+
+  // Keep latest 10 scans
+  history = history.slice(0, 10);
+
+  localStorage.setItem(
+    'snowshield_history',
+    JSON.stringify(history)
+  );
+
+  // Reload history UI
+  loadHistory();
+
+  // Show result card
   card.style.display = 'block';
 }
 
-document.getElementById('urlInput').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') {
-    runScan();
+function loadHistory() {
+
+  const historyContainer =
+    document.getElementById(
+      'scanHistory'
+    );
+
+  const history =
+    JSON.parse(
+      localStorage.getItem(
+        'snowshield_history'
+      )
+    ) || [];
+
+  if (history.length === 0) {
+
+    historyContainer.innerHTML = `
+      <div class="scan-item">
+        <span class="scan-url">
+          No scans yet
+        </span>
+      </div>
+    `;
+
+    return;
   }
-});
+
+  historyContainer.innerHTML =
+    history.map(item => `
+
+      <div class="scan-item">
+
+        <div class="
+          scan-badge ${item.status}
+        "></div>
+
+        <span class="scan-url">
+          ${item.url}
+        </span>
+
+        <span class="scan-time">
+          ${item.score}/100
+        </span>
+
+      </div>
+
+    `).join('');
+}
+
+// ENTER key support
+document.getElementById(
+  'urlInput'
+).addEventListener(
+  'keydown',
+  function(e) {
+
+    if (e.key === 'Enter') {
+      runScan();
+    }
+  }
+);
+
+// Load history on startup
+loadHistory();
 </script>
 </body>
 </html>

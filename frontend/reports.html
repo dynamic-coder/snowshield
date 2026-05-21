@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SnowShield Reports</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+
+  <style>
+
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+    }
+
+    body{
+      background:#050d1a;
+      color:#e8f4ff;
+      font-family:'Syne',sans-serif;
+      min-height:100vh;
+      padding:20px;
+    }
+
+    .container{
+      max-width:430px;
+      margin:auto;
+    }
+
+    .header{
+      margin-top:30px;
+      margin-bottom:30px;
+      text-align:center;
+    }
+
+    .title{
+      font-size:32px;
+      font-weight:800;
+      background:linear-gradient(135deg,#fff,#4fc8f0);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+    }
+
+    .subtitle{
+      font-size:12px;
+      color:#5a7a99;
+      margin-top:8px;
+      font-family:'DM Mono',monospace;
+      letter-spacing:2px;
+      text-transform:uppercase;
+    }
+
+    .stats-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:14px;
+      margin-bottom:24px;
+    }
+
+    .card{
+      background:#0b1829;
+      border:1px solid rgba(100,200,255,0.12);
+      border-radius:18px;
+      padding:18px;
+    }
+
+    .card-title{
+      font-size:11px;
+      color:#5a7a99;
+      margin-bottom:10px;
+      font-family:'DM Mono',monospace;
+      letter-spacing:1px;
+      text-transform:uppercase;
+    }
+
+    .card-value{
+      font-size:32px;
+      font-weight:800;
+    }
+
+    .safe{
+      color:#3dd68c;
+    }
+
+    .danger{
+      color:#f0506e;
+    }
+
+    .warn{
+      color:#f5a623;
+    }
+
+    .score-box{
+      margin-top:10px;
+      background:#0b1829;
+      border:1px solid rgba(100,200,255,0.12);
+      border-radius:18px;
+      padding:20px;
+      margin-bottom:24px;
+    }
+
+    .score-title{
+      font-size:12px;
+      color:#5a7a99;
+      margin-bottom:14px;
+      font-family:'DM Mono',monospace;
+      text-transform:uppercase;
+      letter-spacing:2px;
+    }
+
+    .score-value{
+      font-size:48px;
+      font-weight:800;
+      color:#4fc8f0;
+      margin-bottom:10px;
+    }
+
+    .meter{
+      width:100%;
+      height:10px;
+      background:rgba(255,255,255,0.08);
+      border-radius:100px;
+      overflow:hidden;
+    }
+
+    .meter-fill{
+      height:100%;
+      background:linear-gradient(90deg,#4fc8f0,#3dd68c);
+      width:0%;
+      transition:1s;
+    }
+
+    .activity{
+      margin-top:24px;
+    }
+
+    .activity-title{
+      margin-bottom:14px;
+      font-size:12px;
+      color:#5a7a99;
+      font-family:'DM Mono',monospace;
+      text-transform:uppercase;
+      letter-spacing:2px;
+    }
+
+    .activity-item{
+      background:#0b1829;
+      border:1px solid rgba(100,200,255,0.12);
+      border-radius:14px;
+      padding:14px;
+      margin-bottom:10px;
+    }
+
+    .activity-url{
+      font-size:12px;
+      word-break:break-all;
+      margin-bottom:6px;
+    }
+
+    .activity-meta{
+      display:flex;
+      justify-content:space-between;
+      font-size:11px;
+      color:#5a7a99;
+      font-family:'DM Mono',monospace;
+    }
+
+    .empty{
+      opacity:0.6;
+      text-align:center;
+      padding:30px;
+    }
+
+    .back-btn{
+      margin-top:20px;
+      width:100%;
+      padding:16px;
+      border:none;
+      border-radius:16px;
+      background:linear-gradient(135deg,#1a6fa0,#0d4a70);
+      color:white;
+      font-size:14px;
+      font-weight:700;
+      cursor:pointer;
+    }
+
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <div class="title">Security Reports</div>
+    <div class="subtitle">SnowShield Analytics</div>
+  </div>
+
+  <div class="stats-grid">
+
+    <div class="card">
+      <div class="card-title">Total Scans</div>
+      <div class="card-value" id="totalScans">0</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Safe</div>
+      <div class="card-value safe" id="safeCount">0</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Suspicious</div>
+      <div class="card-value warn" id="suspiciousCount">0</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Dangerous</div>
+      <div class="card-value danger" id="dangerCount">0</div>
+    </div>
+
+  </div>
+
+  <div class="score-box">
+
+    <div class="score-title">
+      Overall Security Score
+    </div>
+
+    <div class="score-value" id="securityScore">
+      100%
+    </div>
+
+    <div class="meter">
+      <div class="meter-fill" id="meterFill"></div>
+    </div>
+
+  </div>
+
+  <div class="activity">
+
+    <div class="activity-title">
+      Recent Activity
+    </div>
+
+    <div id="activityList"></div>
+
+  </div>
+
+  <button class="back-btn" onclick="window.location.href='scan.html'">
+    ← Back to Scanner
+  </button>
+
+</div>
+
+<script>
+
+const history =
+  JSON.parse(
+    localStorage.getItem('snowshield_history')
+  ) || [];
+
+const total = history.length;
+
+const safe =
+  history.filter(
+    item => item.status === 'safe'
+  ).length;
+
+const suspicious =
+  history.filter(
+    item => item.status === 'suspicious'
+  ).length;
+
+const dangerous =
+  history.filter(
+    item => item.status === 'dangerous'
+  ).length;
+
+document.getElementById('totalScans').textContent = total;
+document.getElementById('safeCount').textContent = safe;
+document.getElementById('suspiciousCount').textContent = suspicious;
+document.getElementById('dangerCount').textContent = dangerous;
+
+// Security score
+let score = 100;
+
+score -= dangerous * 8;
+score -= suspicious * 3;
+
+if(score < 0){
+  score = 0;
+}
+
+document.getElementById('securityScore').textContent =
+  score + '%';
+
+document.getElementById('meterFill').style.width =
+  score + '%';
+
+// Recent activity
+const activity =
+  document.getElementById('activityList');
+
+if(history.length === 0){
+
+  activity.innerHTML = `
+    <div class="empty">
+      No scan activity yet
+    </div>
+  `;
+
+}else{
+
+  activity.innerHTML =
+    history.map(item => `
+
+      <div class="activity-item">
+
+        <div class="activity-url">
+          ${item.url}
+        </div>
+
+        <div class="activity-meta">
+
+          <span>
+            ${item.status.toUpperCase()}
+          </span>
+
+          <span>
+            ${item.score}/100
+          </span>
+
+        </div>
+
+      </div>
+
+    `).join('');
+
+}
+
+</script>
+
+</body>
+</html>
